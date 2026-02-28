@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  VENDOR
+  DEPARTMENT
+  FINANCE
+  ACCOUNTS
+  ADMIN
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SUBMITTED
+  DEPT_APPROVED
+  FINANCE_APPROVED
+  PAID
+  REJECTED
+}
+
+model User {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  role       Role
+  supabaseId String?  @unique
+  createdAt  DateTime @default(now())
+
+  invoicesSubmitted Invoice[]         @relation("VendorInvoices")
+  deptApprovals     Invoice[]         @relation("DeptApprovals")
+  financeApprovals  Invoice[]         @relation("FinanceApprovals")
+  activities        InvoiceActivity[]
+}
+
+model Vendor {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  invoices Invoice[]
+}
+
+model Invoice {
+  id            String  @id @default(uuid())
+  invoiceNumber String  @unique
+  amount        Decimal
+  currency      String  @default("INR")
+  description   String
+  fileUrl       String?
+
+  status InvoiceStatus @default(DRAFT)
+
+  vendorId String
+  vendor   Vendor @relation(fields: [vendorId], references: [id])
+
+  submittedById String
+  submittedBy   User   @relation("VendorInvoices", fields: [submittedById], references: [id])
+
+  deptApprovedById String?
+  deptApprovedBy   User?   @relation("DeptApprovals", fields: [deptApprovedById], references: [id])
+
+  financeApprovedById String?
+  financeApprovedBy   User?   @relation("FinanceApprovals", fields: [financeApprovedById], references: [id])
+
+  rejectionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  paidAt           DateTime?
+  paymentReference String?
+  paymentNotes     String?
+
+  invoiceActivities InvoiceActivity[]
+
+  @@index([status])
+  @@index([submittedById])
+  @@index([vendorId])
+  @@index([createdAt])
+}
+
+model InvoiceActivity {
+  id        String   @id @default(uuid())
+  invoiceId String
+  userId    String
+  action    String
+  metadata   String?  
+  createdAt DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+}
