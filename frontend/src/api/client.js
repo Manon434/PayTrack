@@ -136,9 +136,21 @@ export const api = {
       body: JSON.stringify(body)
     });
 
-    if (!res.ok)
-      throw new Error(await res.text());
+    // if (!res.ok)
+    //   throw new Error(await res.text());
 
+    if (!res.ok) {
+
+      const text = await res.text();
+    
+      try {
+        const json = JSON.parse(text);
+        throw new Error(json.message);
+      } catch {
+        throw new Error(text);
+      }
+    
+    }
     return res.json();
   }
 

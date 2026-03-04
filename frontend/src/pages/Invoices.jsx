@@ -19,37 +19,65 @@ export default function Invoices() {
   // ===============================
   // LOAD INVOICES (WITH PAGINATION)
   // ===============================
+  // async function loadInvoices(pageNumber = 1) {
+
+  //   try {
+
+  //     setLoading(true);
+
+  //     // const response =
+  //     //   await api.get(`/invoices?page=${pageNumber}&limit=10`);
+
+  //     // setInvoices(response.data);
+  //     // setPage(response.page);
+  //     // setTotalPages(response.totalPages);
+
+  //     const response =
+  //     await api.get(`/invoices?page=${pageNumber}&limit=10`);
+
+  //     setInvoices(response.data);
+  //     setPage(response.data.page);
+  //      setTotalPages(response.data.totalPages);
+
+  //   } catch (err) {
+
+  //     console.error(err);
+  //     alert("Failed to load invoices");
+
+  //   } finally {
+
+  //     setLoading(false);
+
+  //   }
+
+  // }
+
   async function loadInvoices(pageNumber = 1) {
 
     try {
-
+  
       setLoading(true);
-
-      // const response =
-      //   await api.get(`/invoices?page=${pageNumber}&limit=10`);
-
-      // setInvoices(response.data);
-      // setPage(response.page);
-      // setTotalPages(response.totalPages);
-
+  
       const response =
-      await api.get(`/invoices?page=${pageNumber}&limit=10`);
-
-      setInvoices(response.data.data);
-      setPage(response.data.page);
-       setTotalPages(response.data.totalPages);
-
+        await api.get(`/invoices?page=${pageNumber}&limit=10`);
+  
+      // backend returns { data, page, totalPages }
+      setInvoices(response.data || []);
+      setPage(response.page || 1);
+      setTotalPages(response.totalPages || 1);
+  
     } catch (err) {
-
-      console.error(err);
-      alert("Failed to load invoices");
-
+  
+      console.error("Invoice load error:", err);
+  
+      setInvoices([]);
+  
     } finally {
-
+  
       setLoading(false);
-
+  
     }
-
+  
   }
 
   // ===============================
@@ -133,7 +161,8 @@ export default function Invoices() {
 
         <tbody>
 
-          {invoices.map(inv => (
+          {/* {invoices.map(inv => ( */}
+          {(invoices || []).map(inv => (
 
             <tr key={inv.id} className="border-t">
 
