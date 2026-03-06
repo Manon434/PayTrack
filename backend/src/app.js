@@ -9,8 +9,9 @@ import userRoutes from "./routes/user.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import vendorRoutes from "./routes/vendor.routes.js";
-import { errorMiddleware } from "./middleware/error.middleware.js";
+import analyticsRoutes from "./routes/analytics.routes.js";
 
+import { errorMiddleware } from "./middleware/error.middleware.js";
 
 
 
@@ -32,11 +33,15 @@ app.use("/invoices", invoiceRoutes);
 
 app.use("/admin", adminRoutes);
 app.use("/vendors", vendorRoutes);
-app.use(errorMiddleware);
+app.use("/analytics", analyticsRoutes);
+
+
 
 app.get("/", (req, res) => {
   res.send("PayTrack backend running");
 });
+
+app.use(errorMiddleware);
 
 
 // app.listen(3000, () => {

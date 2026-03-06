@@ -248,6 +248,14 @@ export function AuthProvider({ children }) {
         headers: {
           "Content-Type": "application/json"
         },
+  //     const token = await getToken();
+
+  //    await fetch("http://localhost:3000/auth/sync-user", {
+  //     method: "POST",
+  //      headers: {
+  //      "Content-Type": "application/json",
+  //      Authorization: `Bearer ${token}`
+  // },
         body: JSON.stringify({
           email: sessionUser.email,
           supabaseId: sessionUser.id

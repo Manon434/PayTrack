@@ -62,70 +62,6 @@ export async function create(req, res) {
 }
 
 
-/* ===============================
-   LIST (Role Based)
-================================= */
-
-
-// export async function list(req, res) {
-
-//   try {
-
-//     const page = Number(req.query.page) || 1;
-//     const limit = Number(req.query.limit) || 10;
-
-//     const skip = (page - 1) * limit;
-
-//     let where = {};
-
-//     if (req.user.role === "VENDOR") {
-//       where.submittedById = req.user.id;
-//     }
-//     else if (req.user.role === "DEPARTMENT") {
-//       where.status = "SUBMITTED";
-//     }
-//     else if (req.user.role === "FINANCE") {
-//       where.status = "DEPT_APPROVED";
-//     }
-//     else if (req.user.role === "ACCOUNTS") {
-//       where.status = "FINANCE_APPROVED";
-//     }
-//     else if (req.user.role === "ADMIN") {
-//       where = {};
-//     }
-
-//     const [invoices, total] = await Promise.all([
-
-//       prisma.invoice.findMany({
-//         where,
-//         include: { vendor: true },
-//         orderBy: { createdAt: "desc" },
-//         skip,
-//         take: limit
-//       }),
-
-//       prisma.invoice.count({ where })
-
-//     ]);
-
-//     res.json({
-//       data: invoices,
-//       total,
-//       page,
-//       totalPages: Math.ceil(total / limit)
-//     });
-
-//   } catch (e) {
-
-//     console.error("List Invoice Error:", e);
-
-//     res.status(500).json({
-//       message: "Unable to load invoices"
-//     });
-
-//   }
-
-// }
 
 /* ===============================
    LIST (Role Based + Pagination)
@@ -134,7 +70,6 @@ export async function list(req, res) {
 
   try {
 
-    // ✅ Pagination params
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
@@ -142,10 +77,7 @@ export async function list(req, res) {
 
     let where = {};
 
-    // ===============================
     // ROLE FILTERING
-    // ===============================
-
     if (req.user.role === "VENDOR") {
       where.submittedById = req.user.id;
     }
@@ -166,10 +98,6 @@ export async function list(req, res) {
       where = {};
     }
 
-    // ===============================
-    // PARALLEL QUERY (PERFORMANCE)
-    // ===============================
-
     const [invoices, total] = await Promise.all([
 
       prisma.invoice.findMany({
@@ -188,10 +116,6 @@ export async function list(req, res) {
 
     ]);
 
-    // ===============================
-    // RESPONSE FORMAT
-    // ===============================
-
     res.json({
       data: invoices,
       total,
@@ -204,7 +128,7 @@ export async function list(req, res) {
     console.error("Invoice List Error:", error);
 
     res.status(500).json({
-      message: "Unable to load invoices"
+      message: error.message
     });
 
   }

@@ -7,12 +7,107 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  VENDOR
-  DEPARTMENT
-  FINANCE
-  ACCOUNTS
-  ADMIN
+model Invoice {
+
+  id            String        @id
+  invoiceNumber String        @unique
+  amount        Decimal
+  currency      String        @default("INR")
+  description   String
+  fileUrl       String?
+
+  status        InvoiceStatus @default(DRAFT)
+
+  vendorId      String
+  submittedById String
+
+  deptApprovedById    String?
+  financeApprovedById String?
+
+  rejectionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  paidAt DateTime?
+
+  paymentNotes     String?
+  paymentReference String?
+
+  /* =========================
+     RELATIONS
+  ========================= */
+
+  vendor            Vendor @relation(fields: [vendorId], references: [id])
+
+  submittedBy       User  @relation("Invoice_submittedByIdToUser", fields: [submittedById], references: [id])
+
+  deptApprovedBy    User? @relation("Invoice_deptApprovedByIdToUser", fields: [deptApprovedById], references: [id])
+
+  financeApprovedBy User? @relation("Invoice_financeApprovedByIdToUser", fields: [financeApprovedById], references: [id])
+
+  activities        InvoiceActivity[]
+
+  /* =========================
+     INDEXES (PERFORMANCE)
+  ========================= */
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([submittedById])
+  @@index([vendorId])
+
+}
+
+model InvoiceActivity {
+
+  id        String   @id
+  invoiceId String
+  userId    String
+
+  action    String
+  metadata  String?
+
+  createdAt DateTime @default(now())
+
+  /* RELATIONS */
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+}
+
+model User {
+
+  id        String   @id
+  email     String   @unique
+  role      Role
+  supabaseId String? @unique
+
+  createdAt DateTime @default(now())
+
+  /* RELATIONS */
+
+  submittedInvoices Invoice[] @relation("Invoice_submittedByIdToUser")
+
+  deptApprovedInvoices Invoice[] @relation("Invoice_deptApprovedByIdToUser")
+
+  financeApprovedInvoices Invoice[] @relation("Invoice_financeApprovedByIdToUser")
+
+  activities InvoiceActivity[]
+
+}
+
+model Vendor {
+
+  id        String   @id
+  name      String
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+
+  invoices Invoice[]
+
 }
 
 enum InvoiceStatus {
@@ -24,75 +119,10 @@ enum InvoiceStatus {
   REJECTED
 }
 
-model User {
-  id         String   @id @default(uuid())
-  email      String   @unique
-  role       Role
-  supabaseId String?  @unique
-  createdAt  DateTime @default(now())
-
-  invoicesSubmitted Invoice[]         @relation("VendorInvoices")
-  deptApprovals     Invoice[]         @relation("DeptApprovals")
-  financeApprovals  Invoice[]         @relation("FinanceApprovals")
-  activities        InvoiceActivity[]
-}
-
-model Vendor {
-  id        String   @id @default(uuid())
-  name      String
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-
-  invoices Invoice[]
-}
-
-model Invoice {
-  id            String  @id @default(uuid())
-  invoiceNumber String  @unique
-  amount        Decimal
-  currency      String  @default("INR")
-  description   String
-  fileUrl       String?
-
-  status InvoiceStatus @default(DRAFT)
-
-  vendorId String
-  vendor   Vendor @relation(fields: [vendorId], references: [id])
-
-  submittedById String
-  submittedBy   User   @relation("VendorInvoices", fields: [submittedById], references: [id])
-
-  deptApprovedById String?
-  deptApprovedBy   User?   @relation("DeptApprovals", fields: [deptApprovedById], references: [id])
-
-  financeApprovedById String?
-  financeApprovedBy   User?   @relation("FinanceApprovals", fields: [financeApprovedById], references: [id])
-
-  rejectionReason String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  paidAt           DateTime?
-  paymentReference String?
-  paymentNotes     String?
-
-  invoiceActivities InvoiceActivity[]
-
-  @@index([status])
-  @@index([submittedById])
-  @@index([vendorId])
-  @@index([createdAt])
-}
-
-model InvoiceActivity {
-  id        String   @id @default(uuid())
-  invoiceId String
-  userId    String
-  action    String
-  metadata   String?  
-  createdAt DateTime @default(now())
-
-  invoice Invoice @relation(fields: [invoiceId], references: [id])
-  user    User    @relation(fields: [userId], references: [id])
+enum Role {
+  VENDOR
+  DEPARTMENT
+  FINANCE
+  ACCOUNTS
+  ADMIN
 }
