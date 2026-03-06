@@ -18,7 +18,14 @@ import { errorMiddleware } from "./middleware/error.middleware.js";
 
 const app = express();
 
-app.use(cors());
+// app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://your-vercel-domain.vercel.app"
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 
@@ -40,6 +47,7 @@ app.use("/analytics", analyticsRoutes);
 app.get("/", (req, res) => {
   res.send("PayTrack backend running");
 });
+
 
 app.use(errorMiddleware);
 
