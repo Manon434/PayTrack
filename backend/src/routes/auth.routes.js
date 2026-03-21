@@ -142,21 +142,99 @@
 
 // export default router;
 
+
+// import express from "express";
+// import prisma from "../lib/prisma.js";
+// import { createClient } from "@supabase/supabase-js";
+
+// const router = express.Router();
+
+// // 🔥 create supabase client (server side)
+// const supabase = createClient(
+//   process.env.SUPABASE_URL,
+//   process.env.SUPABASE_SERVICE_ROLE_KEY
+// );
+
+// router.post("/sync-user", async (req, res) => {
+//   try {
+//     // ✅ 1. GET TOKEN FROM HEADER
+//     const authHeader = req.headers.authorization;
+
+//     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+//       return res.status(401).json({ message: "No token provided" });
+//     }
+//      console.log("TOKEN:", token);
+
+//     const token = authHeader.split(" ")[1];
+//     console.log("HEADERS:", req.headers);
+
+//     // ✅ 2. VERIFY USER FROM SUPABASE
+//     const { data, error } = await supabase.auth.getUser(token);
+   
+
+//     if (error || !data?.user) {
+//       return res.status(401).json({ message: "Invalid token" });
+//     }
+
+//     const email = data.user.email;
+//     const supabaseId = data.user.id;
+//     console.log("SUPABASE USER:", data, error);
+
+//     // ✅ 3. UPSERT USER (NO CRASH)
+//     const user = await prisma.user.upsert({
+//       where: {
+//         email,
+//       },
+//       update: {
+//         supabaseId,
+//       },
+//       create: {
+//         email,
+//         supabaseId,
+//         role: getRole(email),
+//       },
+//     });
+
+//     res.json(user);
+
+//   } catch (err) {
+//     console.error("SYNC USER ERROR:", err);
+//     res.status(500).json({
+//       message: err.message,
+//     });
+//   }
+// });
+
+// // ✅ ROLE HELPER
+// function getRole(email) {
+//   const ADMIN_EMAILS = ["admin1@gmail.com"];
+
+//   if (ADMIN_EMAILS.includes(email)) return "ADMIN";
+//   if (email.includes("vendor")) return "VENDOR";
+//   if (email.includes("dept")) return "DEPARTMENT";
+//   if (email.includes("finance")) return "FINANCE";
+
+//   return "ACCOUNTS";
+// }
+
+// export default router;
+
 import express from "express";
 import prisma from "../lib/prisma.js";
 import { createClient } from "@supabase/supabase-js";
 
 const router = express.Router();
 
-// 🔥 create supabase client (server side)
+// 🔥 Supabase admin client (server-side only)
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// ✅ SYNC USER ROUTE
 router.post("/sync-user", async (req, res) => {
   try {
-    // ✅ 1. GET TOKEN FROM HEADER
+    // ✅ 1. Get token from header
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -164,22 +242,31 @@ router.post("/sync-user", async (req, res) => {
     }
 
     const token = authHeader.split(" ")[1];
+    console.log("TOKEN:", token);
 
-    // ✅ 2. VERIFY USER FROM SUPABASE
+    // ✅ 2. Verify user with Supabase
     const { data, error } = await supabase.auth.getUser(token);
 
     if (error || !data?.user) {
+      console.error("SUPABASE ERROR:", error);
       return res.status(401).json({ message: "Invalid token" });
     }
 
-    const email = data.user.email;
-    const supabaseId = data.user.id;
+    const supabaseUser = data.user;
 
-    // ✅ 3. UPSERT USER (NO CRASH)
+    // ✅ 3. Safety checks
+    if (!supabaseUser.email) {
+      return res.status(400).json({ message: "Email not found in token" });
+    }
+
+    const email = supabaseUser.email;
+    const supabaseId = supabaseUser.id;
+
+    console.log("USER VERIFIED:", email);
+
+    // ✅ 4. Upsert user in DB
     const user = await prisma.user.upsert({
-      where: {
-        email,
-      },
+      where: { email }, // must be unique in schema
       update: {
         supabaseId,
       },
@@ -190,17 +277,18 @@ router.post("/sync-user", async (req, res) => {
       },
     });
 
-    res.json(user);
+    return res.json(user);
 
   } catch (err) {
     console.error("SYNC USER ERROR:", err);
-    res.status(500).json({
-      message: err.message,
+    return res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
     });
   }
 });
 
-// ✅ ROLE HELPER
+// ✅ ROLE HELPER FUNCTION
 function getRole(email) {
   const ADMIN_EMAILS = ["admin1@gmail.com"];
 
