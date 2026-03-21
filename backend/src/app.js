@@ -22,7 +22,7 @@ const app = express();
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://your-vercel-domain.vercel.app"
+    "https://paytrack-frontend-delta.vercel.app"
   ],
   credentials: true
 }));
@@ -34,7 +34,7 @@ app.use(express.json());
 app.use("/auth", authRoutes);
 
 // ✅ PROTECTED ROUTES (AUTH REQUIRED)
-app.use(authMiddleware);
+// app.use(authMiddleware);
 app.use("/users", userRoutes);
 app.use("/invoices", invoiceRoutes);
 
