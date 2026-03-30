@@ -94,79 +94,140 @@
 
 // }
 
-import { supabase } from "../lib/supabase";
+
+// import { supabase } from "../lib/supabase";
+
+// export default function Login() {
+
+//   async function loginEmail() {
+//     const email = prompt("Enter email:");
+//     const password = prompt("Enter password:");
+
+//     const { error } = await supabase.auth.signInWithPassword({
+//       email,
+//       password
+//     });
+
+//     if (error) alert(error.message);
+//   }
+
+//   async function signupEmail() {
+//     const email = prompt("Enter email:");
+//     const password = prompt("Create password:");
+
+//     const { error } = await supabase.auth.signUp({
+//       email,
+//       password
+//     });
+
+//     if (error) alert(error.message);
+//     else alert("Signup successful. Now login.");
+//   }
+
+//   async function loginGoogle() {
+//     await supabase.auth.signInWithOAuth({
+//       provider: "google"
+//     });
+//   }
+
+//   return (
+//     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-200">
+
+//       <h1 className="text-5xl font-bold mb-2 text-gray-800">
+//         Welcome to PayTrack
+//       </h1>
+
+//       <p className="mb-8 text-gray-600">
+//         Smart Invoice & Payment Management System
+//       </p>
+
+//       <div className="bg-white p-8 rounded-xl shadow-md flex flex-col gap-4 w-80">
+
+//         <button
+//           onClick={loginGoogle}
+//           className="bg-red-500 text-white py-2 rounded hover:bg-red-600"
+//         >
+//           Continue with Google
+//         </button>
+
+//         <button
+//           onClick={loginEmail}
+//           className="bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+//         >
+//           Login with Email
+//         </button>
+
+//         <button
+//           onClick={signupEmail}
+//           className="bg-gray-800 text-white py-2 rounded hover:bg-gray-900"
+//         >
+//           Signup with Email
+//         </button>
+
+//       </div>
+
+//       <p className="mt-4 text-sm text-gray-500">
+//         Secure login powered by Supabase
+//       </p>
+
+//     </div>
+//   );
+// }
+
+import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
+  const { loginWithEmail } = useAuth();
+  const navigate = useNavigate();
 
-  async function loginEmail() {
-    const email = prompt("Enter email:");
-    const password = prompt("Enter password:");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (error) alert(error.message);
-  }
-
-  async function signupEmail() {
-    const email = prompt("Enter email:");
-    const password = prompt("Create password:");
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password
-    });
-
-    if (error) alert(error.message);
-    else alert("Signup successful. Now login.");
-  }
-
-  async function loginGoogle() {
-    await supabase.auth.signInWithOAuth({
-      provider: "google"
-    });
-  }
+  const handleLogin = async () => {
+    try {
+      await loginWithEmail(email, password);
+      navigate("/"); // go to dashboard
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-200">
+    <div className="flex flex-col items-center justify-center h-screen">
 
-      <h1 className="text-5xl font-bold mb-2 text-gray-800">
-        Welcome to PayTrack
-      </h1>
+      <h1 className="text-2xl mb-4">Login</h1>
 
-      <p className="mb-8 text-gray-600">
-        Smart Invoice & Payment Management System
-      </p>
+      <input
+        className="border p-2 mb-2"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
 
-      <div className="bg-white p-8 rounded-xl shadow-md flex flex-col gap-4 w-80">
+      <input
+        className="border p-2 mb-2"
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
 
-        <button
-          onClick={loginGoogle}
-          className="bg-red-500 text-white py-2 rounded hover:bg-red-600"
-        >
-          Continue with Google
-        </button>
+      {error && <p className="text-red-500">{error}</p>}
 
-        <button
-          onClick={loginEmail}
-          className="bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-        >
-          Login with Email
-        </button>
+      <button
+        onClick={handleLogin}
+        className="bg-black text-white px-4 py-2 mt-2"
+      >
+        Login
+      </button>
 
-        <button
-          onClick={signupEmail}
-          className="bg-gray-800 text-white py-2 rounded hover:bg-gray-900"
-        >
-          Signup with Email
-        </button>
-
-      </div>
-
-      <p className="mt-4 text-sm text-gray-500">
-        Secure login powered by Supabase
+      {/* 🔥 Demo credentials */}
+      <p className="text-sm text-gray-500 mt-4">
+        Demo: demo@gmail.com / 123890
+        
       </p>
 
     </div>

@@ -157,64 +157,78 @@
 
 // };
 
-import { supabase } from "../lib/supabase";
 
-const API_URL = import.meta.env.VITE_API_URL;
+// import { supabase } from "../lib/supabase";
 
-// 🔥 SAFE TOKEN GETTER
-async function getToken() {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+// const API_URL = import.meta.env.VITE_API_URL;
 
-  if (!session) return null;
+// // 🔥 SAFE TOKEN GETTER
+// async function getToken() {
+//   const {
+//     data: { session },
+//   } = await supabase.auth.getSession();
 
-  return session.access_token;
-}
+//   if (!session) return null;
 
-// 🔥 GENERIC FETCH
-async function request(path, options = {}) {
-  const token = await getToken();
+//   return session.access_token;
+// }
 
-  if (!token) {
-    throw new Error("User not authenticated");
-  }
+// // 🔥 GENERIC FETCH
+// async function request(path, options = {}) {
+//   const token = await getToken();
 
-  const res = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...(options.headers || {}),
-    },
-  });
+//   if (!token) {
+//     throw new Error("User not authenticated");
+//   }
 
-  if (!res.ok) {
-    const text = await res.text();
+//   const res = await fetch(`${API_URL}${path}`, {
+//     ...options,
+//     headers: {
+//       "Content-Type": "application/json",
+//       Authorization: `Bearer ${token}`,
+//       ...(options.headers || {}),
+//     },
+//   });
 
-    try {
-      const json = JSON.parse(text);
-      throw new Error(json.message);
-    } catch {
-      throw new Error(text);
-    }
-  }
+//   if (!res.ok) {
+//     const text = await res.text();
 
-  return res.json();
-}
+//     try {
+//       const json = JSON.parse(text);
+//       throw new Error(json.message);
+//     } catch {
+//       throw new Error(text);
+//     }
+//   }
+
+//   return res.json();
+// }
+
+// export const api = {
+//   get: (path) => request(path),
+
+//   post: (path, body) =>
+//     request(path, {
+//       method: "POST",
+//       body: JSON.stringify(body),
+//     }),
+
+//   put: (path, body) =>
+//     request(path, {
+//       method: "PUT",
+//       body: JSON.stringify(body),
+//     }),
+// };
+
+// 🚀 DEMO MODE API (NO BACKEND CALLS)
 
 export const api = {
-  get: (path) => request(path),
-
-  post: (path, body) =>
-    request(path, {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
-
-  put: (path, body) =>
-    request(path, {
-      method: "PUT",
-      body: JSON.stringify(body),
-    }),
+  getInvoices: async () => [],
+  createInvoice: async () => ({ success: true }),
+  approveInvoice: async () => ({ success: true }),
+  rejectInvoice: async () => ({ success: true }),
+  getUser: async () => ({
+    name: "Mehak",
+    role: "ADMIN"
+  })
 };

@@ -445,166 +445,286 @@
 // }
 // console.log("API_URL:", API_URL);
 
+
+
+// import { createContext, useContext, useEffect, useState } from "react";
+// import { supabase } from "../lib/supabase";
+
+// const AuthContext = createContext();
+
+// // ✅ Environment variable
+// const API_URL = import.meta.env.VITE_API_URL;
+
+// export function AuthProvider({ children }) {
+
+//   const [user, setUser] = useState(null);
+//   const [dbUser, setDbUser] = useState(null);
+//   const [loading, setLoading] = useState(true);
+
+//   // ✅ Get access token
+//   async function getToken() {
+//     const { data } = await supabase.auth.getSession();
+//     return data.session?.access_token;
+//   }
+
+//   // ✅ Sync Supabase → Backend
+//   async function syncUser(sessionUser) {
+//     try {
+//       const token = await getToken();
+
+//       const res = await fetch(`${API_URL}/auth/sync-user`, {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${token}`
+//         },
+//         body: JSON.stringify({
+//           email: sessionUser.email,
+//           supabaseId: sessionUser.id
+//         })
+//       });
+
+//       if (!res.ok) {
+//         console.error("Sync failed:", await res.text());
+//       }
+
+//     } catch (err) {
+//       console.error("Sync error:", err);
+//     }
+//   }
+
+//   // ✅ Load DB user
+//   async function loadDbUser(token) {
+//     try {
+//       const res = await fetch(`${API_URL}/users/me`, {
+//         headers: {
+//           Authorization: `Bearer ${token}`
+//         }
+//       });
+
+//       if (!res.ok) {
+//         setDbUser(null);
+//         return;
+//       }
+
+//       const data = await res.json();
+//       setDbUser(data);
+
+//     } catch (err) {
+//       console.error("Load DB user error:", err);
+//     }
+//   }
+
+//   useEffect(() => {
+
+//     let mounted = true;
+
+//     async function init() {
+//       try {
+//         const { data } = await supabase.auth.getSession();
+//         const session = data.session;
+
+//         if (!mounted) return;
+
+//         if (session?.user) {
+//           setUser(session.user);
+
+//           await syncUser(session.user);
+//           await loadDbUser(session.access_token);
+//         }
+
+//       } catch (err) {
+//         console.error("Init error:", err);
+//       } finally {
+//         if (mounted) setLoading(false);
+//       }
+//     }
+
+//     init();
+
+//     const { data: listener } =
+//       supabase.auth.onAuthStateChange(async (event, session) => {
+
+//         if (!mounted) return;
+
+//         if (session?.user) {
+//           setUser(session.user);
+
+//           // ✅ Avoid duplicate calls unless needed
+//           if (event === "SIGNED_IN") {
+//             await syncUser(session.user);
+//             await loadDbUser(session.access_token);
+//           }
+
+//         } else {
+//           setUser(null);
+//           setDbUser(null);
+//         }
+
+//         setLoading(false);
+//       });
+
+//     return () => {
+//       mounted = false;
+//       listener.subscription.unsubscribe();
+//     };
+
+//   }, []);
+
+//   // ✅ Auth functions
+
+//   async function loginWithGoogle() {
+//     await supabase.auth.signInWithOAuth({
+//       provider: "google"
+//     });
+//   }
+
+//   async function loginWithEmail(email, password) {
+//     const { error } =
+//       await supabase.auth.signInWithPassword({
+//         email,
+//         password
+//       });
+
+//     if (error) throw error;
+//   }
+
+//   async function signupWithEmail(email, password) {
+//     const { error } =
+//       await supabase.auth.signUp({
+//         email,
+//         password
+//       });
+
+//     if (error) throw error;
+//   }
+
+//   async function logout() {
+//     await supabase.auth.signOut();
+//     setUser(null);
+//     setDbUser(null);
+//   }
+
+//   // ✅ Debug (remove in production)
+//   console.log("API_URL:", API_URL);
+
+//   return (
+//     <AuthContext.Provider
+//       value={{
+//         user,
+//         dbUser,
+//         loading,
+//         getToken,
+//         loginWithGoogle,
+//         loginWithEmail,
+//         signupWithEmail,
+//         logout
+//       }}
+//     >
+//       {children}
+//     </AuthContext.Provider>
+//   );
+// }
+
+// export function useAuth() {
+//   return useContext(AuthContext);
+// }
+
 import { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
 
 const AuthContext = createContext();
 
-// ✅ Environment variable
-const API_URL = import.meta.env.VITE_API_URL;
+// 🚀 DEMO MODE ON
+const DEMO_MODE = true;
 
 export function AuthProvider({ children }) {
-
   const [user, setUser] = useState(null);
   const [dbUser, setDbUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Get access token
-  async function getToken() {
-    const { data } = await supabase.auth.getSession();
-    return data.session?.access_token;
-  }
-
-  // ✅ Sync Supabase → Backend
-  async function syncUser(sessionUser) {
-    try {
-      const token = await getToken();
-
-      const res = await fetch(`${API_URL}/auth/sync-user`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          email: sessionUser.email,
-          supabaseId: sessionUser.id
-        })
-      });
-
-      if (!res.ok) {
-        console.error("Sync failed:", await res.text());
-      }
-
-    } catch (err) {
-      console.error("Sync error:", err);
-    }
-  }
-
-  // ✅ Load DB user
-  async function loadDbUser(token) {
-    try {
-      const res = await fetch(`${API_URL}/users/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (!res.ok) {
-        setDbUser(null);
-        return;
-      }
-
-      const data = await res.json();
-      setDbUser(data);
-
-    } catch (err) {
-      console.error("Load DB user error:", err);
-    }
-  }
-
+  // ✅ Load user from localStorage
   useEffect(() => {
+    if (DEMO_MODE) {
+      const savedUser = localStorage.getItem("demoUser");
 
-    let mounted = true;
-
-    async function init() {
-      try {
-        const { data } = await supabase.auth.getSession();
-        const session = data.session;
-
-        if (!mounted) return;
-
-        if (session?.user) {
-          setUser(session.user);
-
-          await syncUser(session.user);
-          await loadDbUser(session.access_token);
-        }
-
-      } catch (err) {
-        console.error("Init error:", err);
-      } finally {
-        if (mounted) setLoading(false);
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
+        setDbUser({
+          name: "Mehak",
+          role: "ADMIN"
+        });
       }
+
+      setLoading(false);
+      return;
     }
-
-    init();
-
-    const { data: listener } =
-      supabase.auth.onAuthStateChange(async (event, session) => {
-
-        if (!mounted) return;
-
-        if (session?.user) {
-          setUser(session.user);
-
-          // ✅ Avoid duplicate calls unless needed
-          if (event === "SIGNED_IN") {
-            await syncUser(session.user);
-            await loadDbUser(session.access_token);
-          }
-
-        } else {
-          setUser(null);
-          setDbUser(null);
-        }
-
-        setLoading(false);
-      });
-
-    return () => {
-      mounted = false;
-      listener.subscription.unsubscribe();
-    };
-
   }, []);
 
-  // ✅ Auth functions
-
-  async function loginWithGoogle() {
-    await supabase.auth.signInWithOAuth({
-      provider: "google"
-    });
-  }
-
+  // ✅ LOGIN (FAKE AUTH)
   async function loginWithEmail(email, password) {
-    const { error } =
-      await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+    if (DEMO_MODE) {
+      if (email === "v1@gmail.com" && password === "123456") {
+        const demoUser = { email };
 
-    if (error) throw error;
+        localStorage.setItem("demoUser", JSON.stringify(demoUser));
+
+        setUser(demoUser);
+        setDbUser({
+          name: "Mehak",
+          role: "ADMIN"
+        });
+
+        return;
+      } else {
+        throw new Error("Invalid credentials");
+      }
+    }
   }
 
+  // ✅ GOOGLE LOGIN (FAKE)
+  async function loginWithGoogle() {
+    if (DEMO_MODE) {
+      const demoUser = { email: "google@paytrack.com" };
+
+      localStorage.setItem("demoUser", JSON.stringify(demoUser));
+
+      setUser(demoUser);
+      setDbUser({
+        name: "Mehak",
+        role: "ADMIN"
+      });
+
+      return;
+    }
+  }
+
+  // ✅ SIGNUP
   async function signupWithEmail(email, password) {
-    const { error } =
-      await supabase.auth.signUp({
-        email,
-        password
+    if (DEMO_MODE) {
+      const demoUser = { email };
+
+      localStorage.setItem("demoUser", JSON.stringify(demoUser));
+
+      setUser(demoUser);
+      setDbUser({
+        name: "New User",
+        role: "VENDOR"
       });
 
-    if (error) throw error;
+      return;
+    }
   }
 
+  // ✅ LOGOUT
   async function logout() {
-    await supabase.auth.signOut();
-    setUser(null);
-    setDbUser(null);
+    if (DEMO_MODE) {
+      localStorage.removeItem("demoUser");
+      setUser(null);
+      setDbUser(null);
+      return;
+    }
   }
-
-  // ✅ Debug (remove in production)
-  console.log("API_URL:", API_URL);
 
   return (
     <AuthContext.Provider
@@ -612,7 +732,6 @@ export function AuthProvider({ children }) {
         user,
         dbUser,
         loading,
-        getToken,
         loginWithGoogle,
         loginWithEmail,
         signupWithEmail,
